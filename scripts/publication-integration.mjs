@@ -22,8 +22,20 @@ async function contents(dir) {
 try {
   for (const status of statuses) {
     await writeFile(
-      `${directory}/${status}.md`,
+      `${directory}/${status}.zh.md`,
       `---\ntitle: PublicationFixture-${status}\ndate: ${status === "future" ? "2099-01-01" : "2020-01-01"}\n${status === "missing" ? "" : `status: ${status === "future" ? "public" : status}\n`}---\n\nPublicationBody-${status}\n`,
+    );
+  }
+  for (const [name, status] of [
+    ["paired.zh", "public"],
+    ["paired.en", "public"],
+    ["english-only.en", "public"],
+    ["hidden-pair.zh", "public"],
+    ["hidden-pair.en", "private"],
+  ]) {
+    await writeFile(
+      `${directory}/${name}.md`,
+      `---\ntitle: PublicationFixture-${name}\ndate: 2020-01-01\nstatus: ${status}\n---\n\nPublicationBody-${name}\n`,
     );
   }
   build();
@@ -52,6 +64,43 @@ try {
     );
   }
   await readFile("dist/posts/publication-test-fixtures/public/index.html");
+  const zh = await readFile(
+    "dist/posts/publication-test-fixtures/paired/index.html",
+    "utf8",
+  );
+  const en = await readFile(
+    "dist/en/posts/publication-test-fixtures/paired/index.html",
+    "utf8",
+  );
+  assert.ok(zh.includes('PublicationBody-paired.zh'));
+  assert.ok(!zh.includes('PublicationBody-paired.en'));
+  assert.ok(en.includes('PublicationBody-paired.en'));
+  assert.ok(!en.includes('PublicationBody-paired.zh'));
+  await assert.rejects(readFile('dist/posts/publication-test-fixtures/english-only/index.html'), { code: 'ENOENT' });
+  await assert.rejects(readFile('dist/en/posts/publication-test-fixtures/hidden-pair/index.html'), { code: 'ENOENT' });
+  assert.ok(zh.includes('hreflang="en"'));
+  assert.ok(en.includes('hreflang="zh-CN"'));
+  assert.ok(en.includes('lang="en"'));
+  for (const file of [
+    "dist/en/posts/publication-test-fixtures/english-only/index.html",
+    "dist/posts/publication-test-fixtures/hidden-pair/index.html",
+  ]) {
+    const html = await readFile(file, "utf8");
+    assert.ok(!html.includes('class="language-switch"'), file);
+    assert.ok(!html.includes("hreflang="), file);
+  }
+  assert.ok(!output.includes("PublicationBody-hidden-pair.en"));
+  const zhList = await readFile("dist/posts/index.html", "utf8");
+  const enList = await readFile("dist/en/posts/index.html", "utf8");
+  assert.ok(zhList.includes("PublicationFixture-paired.zh"));
+  assert.ok(!zhList.includes("PublicationFixture-paired.en"));
+  assert.ok(enList.includes("PublicationFixture-paired.en"));
+  assert.ok(!enList.includes("PublicationFixture-paired.zh"));
+  assert.ok(zhList.includes("PublicationFixture-english-only.en"));
+  assert.ok(!output.includes("Y.Paang"));
+  console.log(
+    "Bilingual routes, language pairing, single-language fallback, and private translations passed.",
+  );
   console.log(
     "Integration passed: public article renders and is indexed; all four non-public states are absent.",
   );

@@ -2,12 +2,13 @@ media:
   input: public/uploads
   output: /uploads
 content:
-  - name: posts
-    label: 文章
+  - name: posts-zh
+    label: 中文文章
     type: collection
     path: content/posts
     format: yaml-frontmatter
-    filename: "{year}-{month}-{day}-{primary}.md"
+    filename: "{fields.slug}.zh.md"
+    exclude: ["**/*.en.md"]
     subfolders: false
     view:
       fields: [title, status, date]
@@ -16,7 +17,13 @@ content:
       default:
         sort: date
         order: desc
-    fields:
+    fields: &post-fields
+      - name: slug
+        label: 文章标识
+        type: string
+        required: true
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        description: 中英文版本填写相同标识，例如 my-first-post；发布后不要修改文件名。
       - name: title
         label: 标题
         type: string
@@ -49,3 +56,20 @@ content:
       - name: body
         label: 正文
         type: rich-text
+
+  - name: posts-en
+    label: English posts
+    type: collection
+    path: content/posts
+    format: yaml-frontmatter
+    filename: "{fields.slug}.en.md"
+    exclude: ["**/*.zh.md"]
+    subfolders: false
+    view:
+      fields: [title, status, date]
+      primary: title
+      sort: [date, title]
+      default:
+        sort: date
+        order: desc
+    fields: *post-fields

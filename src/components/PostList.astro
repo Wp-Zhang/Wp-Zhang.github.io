@@ -1,0 +1,12 @@
+---
+import { postUrl, formatDate, type Post } from '../lib/posts';
+import { htmlLang, languageName, type Locale } from '../lib/i18n';
+interface Props { posts: Post[]; locale: Locale }
+const { posts, locale } = Astro.props;
+---
+<ul class="post-list">{posts.map(post => (
+  <li lang={htmlLang[post.locale]}>
+    <div class="post-meta"><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date, locale)}</time><span>{languageName[post.locale]}</span></div>
+    <h2><a href={postUrl(post)}>{post.data.title}</a></h2><p>{post.data.description}</p>
+  </li>
+))}</ul>

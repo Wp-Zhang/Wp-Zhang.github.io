@@ -1,16 +1,37 @@
 import { getCollection } from "astro:content";
 import { isPublished } from "./publication.mjs";
+import { sitePath, type Locale } from "./i18n";
 
+export function postIdentity(id: string): { slug: string; locale: Locale } {
+  const match = id.match(/^(.+)\.(zh|en)$/);
+  if (!match)
+    throw new Error(`Article filename must end in .zh.md or .en.md: ${id}`);
+  return { slug: match[1], locale: match[2] as Locale };
+}
 export async function getPublicPosts() {
-  return (await getCollection("posts", ({ data }) => isPublished(data))).sort(
+  return (await getCollection("posts", ({ data }) => isPublished(data)))
+    .map((post) => ({ ...post, ...postIdentity(post.id) }))
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+}
+export type Post = Awaited<ReturnType<typeof getPublicPosts>>[number];
+// Show each article once, preferring the interface language when available.
+export function selectPosts(posts: Post[], locale: Locale) {
+  const selected = new Map<string, Post>();
+  for (const post of posts) {
+    if (!selected.has(post.slug) || post.locale === locale)
+      selected.set(post.slug, post);
+  }
+  return [...selected.values()].sort(
     (a, b) => b.data.date.getTime() - a.data.date.getTime(),
   );
 }
-
-export const postUrl = (id: string) =>
-  `/posts/${id.split("/").map(encodeURIComponent).join("/")}/`;
-export const formatDate = (date: Date) =>
-  date.toLocaleDateString("zh-CN", {
+export const postUrl = (post: Pick<Post, "slug" | "locale">) =>
+  sitePath(
+    post.locale,
+    `posts/${post.slug.split("/").map(encodeURIComponent).join("/")}/`,
+  );
+export const formatDate = (date: Date, locale: Locale) =>
+  date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",

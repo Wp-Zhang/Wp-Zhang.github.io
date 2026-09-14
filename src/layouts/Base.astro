@@ -1,32 +1,72 @@
 ---
 import '../styles/global.css';
-interface Props { title?: string; description?: string; noindex?: boolean }
-const { title, description = 'Weipeng Zhang 的博客，记录技术、阅读与生活。', noindex = false } = Astro.props;
-const pageTitle = title ? `${title} · Y.Paang's Blog` : "Y.Paang's Blog";
+import { ui, htmlLang, languageName, sitePath, type Locale } from '../lib/i18n';
+interface Props {
+  title?: string; description?: string; noindex?: boolean; locale?: Locale;
+  alternate?: { locale: Locale; href: string };
+}
+const { title, locale = 'zh', description = ui[locale].description, noindex = false, alternate } = Astro.props;
+const t = ui[locale];
+const pageTitle = title ? `${title} · Weipeng Zhang` : 'Weipeng Zhang / Blog';
 ---
 <!doctype html>
-<html lang="zh-CN">
+<html lang={htmlLang[locale]}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="author" content="Weipeng Zhang" />
     {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    {alternate && <><link rel="alternate" hreflang={htmlLang[locale]} href={new URL(Astro.url.pathname, Astro.site)} /><link rel="alternate" hreflang={htmlLang[alternate.locale]} href={new URL(alternate.href, Astro.site)} /></>}
     <link rel="icon" href="/favicon.ico" />
-    <link rel="alternate" type="application/rss+xml" title="Y.Paang's Blog" href="/index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Weipeng Zhang / Blog" href={sitePath(locale, 'index.xml')} />
     <title>{pageTitle}</title>
+    <script is:inline>
+      (() => {
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch {}
+        document.documentElement.dataset.theme = saved === 'dark' || saved === 'light'
+          ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
-    <a class="skip-link" href="#main">跳转到正文</a>
+    <a class="skip-link" href="#main">{t.skip}</a>
     <header class="site-header">
-      <a class="brand" href="/">Y.Paang<span> / Blog</span></a>
-      <nav aria-label="主导航">
-        <a href="/posts/" aria-current={Astro.url.pathname.startsWith('/posts') ? 'page' : undefined}>文章</a>
-        <a href="/about/" aria-current={Astro.url.pathname === '/about/' ? 'page' : undefined}>关于</a>
-        <a href="/index.xml">RSS</a>
+      <a class="brand" href={sitePath(locale)}>Weipeng Zhang<span> / Blog</span></a>
+      <nav aria-label={t.navigation}>
+        <a href={sitePath(locale, 'posts/')} aria-current={Astro.url.pathname.includes('/posts/') ? 'page' : undefined}>{t.posts}</a>
+        <a href={sitePath(locale, 'about/')} aria-current={Astro.url.pathname.endsWith('/about/') ? 'page' : undefined}>{t.about}</a>
+        <a href={sitePath(locale, 'index.xml')}>RSS</a>
+        {alternate && <a class="language-switch" href={alternate.href} lang={htmlLang[alternate.locale]} hreflang={htmlLang[alternate.locale]}>{languageName[alternate.locale]}</a>}
+        <button id="theme-toggle" type="button" aria-label={t.dark} data-dark-label={t.dark} data-light-label={t.light} hidden><span class="theme-moon" aria-hidden="true">☾</span><span class="theme-sun" aria-hidden="true">☀</span></button>
       </nav>
     </header>
     <main id="main"><slot /></main>
     <footer>© {new Date().getFullYear()} Weipeng Zhang <a href="https://github.com/Wp-Zhang">GitHub ↗</a></footer>
+    <script>
+      const button = document.querySelector<HTMLButtonElement>('#theme-toggle')!;
+      const system = matchMedia('(prefers-color-scheme: dark)');
+      let explicit = false;
+      try { explicit = ['light', 'dark'].includes(localStorage.getItem('theme') ?? ''); } catch {}
+      const update = () => {
+        const dark = document.documentElement.dataset.theme === 'dark';
+        button.setAttribute('aria-label', (dark ? button.dataset.lightLabel : button.dataset.darkLabel)!);
+        button.title = button.getAttribute('aria-label')!;
+      };
+      button.hidden = false;
+      update();
+      button.addEventListener('click', () => {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        explicit = true;
+        try { localStorage.setItem('theme', theme); } catch {}
+        update();
+      });
+      system.addEventListener('change', event => {
+        if (!explicit) { document.documentElement.dataset.theme = event.matches ? 'dark' : 'light'; update(); }
+      });
+    </script>
   </body>
 </html>

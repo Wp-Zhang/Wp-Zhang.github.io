@@ -33,6 +33,7 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 const unpublished = [];
+const publishedTitles = new Set();
 for (const dir of ["archive/hugo/content/posts", "content/posts"]) {
   for (const file of (await files(dir)).filter((file) =>
     file.endsWith(".md"),
@@ -41,11 +42,25 @@ for (const dir of ["archive/hugo/content/posts", "content/posts"]) {
     const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
     assert.ok(match, `Missing frontmatter: ${file}`);
     const data = parse(match[1]);
-    if (file.startsWith("archive/") || !isPublished(data))
+    if (file.startsWith("archive/") || !isPublished(data)) {
       unpublished.push(data.title);
+      if (!file.startsWith("archive/")) {
+        const match = file
+          .slice("content/posts/".length)
+          .match(/^(.+)\.(zh|en)\.md$/);
+        if (match) {
+          const route = `dist/${match[2] === "en" ? "en/" : ""}posts/${match[1]}/index.html`;
+          assert.ok(
+            !outputFiles.includes(route),
+            `Unpublished route leaked: ${route}`,
+          );
+        }
+      }
+    } else publishedTitles.add(data.title);
   }
 }
 for (const title of unpublished) {
+  if (publishedTitles.has(title)) continue; // Translations may legitimately share a title.
   assert.ok(
     !output.includes(title) && !output.includes(escapeHtml(title)),
     `Unpublished title leaked: ${title}`,
