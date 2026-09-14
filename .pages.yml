@@ -1,0 +1,51 @@
+media:
+  input: public/uploads
+  output: /uploads
+content:
+  - name: posts
+    label: 文章
+    type: collection
+    path: content/posts
+    format: yaml-frontmatter
+    filename: "{year}-{month}-{day}-{primary}.md"
+    subfolders: false
+    view:
+      fields: [title, status, date]
+      primary: title
+      sort: [date, title]
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: 标题
+        type: string
+        required: true
+      - name: description
+        label: 摘要
+        type: text
+      - name: date
+        label: 日期
+        type: date
+        required: true
+      - name: status
+        label: 发布状态
+        type: select
+        required: true
+        default: draft
+        description: 只有 public 会发布到网站。公开仓库中的源码仍可被读取。
+        options:
+          values:
+            - name: draft
+              label: 草稿
+            - name: private
+              label: 不公开到网站
+            - name: public
+              label: 公开发布
+      - name: tags
+        label: 标签
+        type: string
+        list: true
+      - name: body
+        label: 正文
+        type: rich-text

@@ -1,0 +1,32 @@
+---
+import '../styles/global.css';
+interface Props { title?: string; description?: string; noindex?: boolean }
+const { title, description = 'Weipeng Zhang 的博客，记录技术、阅读与生活。', noindex = false } = Astro.props;
+const pageTitle = title ? `${title} · Y.Paang's Blog` : "Y.Paang's Blog";
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="alternate" type="application/rss+xml" title="Y.Paang's Blog" href="/index.xml" />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳转到正文</a>
+    <header class="site-header">
+      <a class="brand" href="/">Y.Paang<span> / Blog</span></a>
+      <nav aria-label="主导航">
+        <a href="/posts/" aria-current={Astro.url.pathname.startsWith('/posts') ? 'page' : undefined}>文章</a>
+        <a href="/about/" aria-current={Astro.url.pathname === '/about/' ? 'page' : undefined}>关于</a>
+        <a href="/index.xml">RSS</a>
+      </nav>
+    </header>
+    <main id="main"><slot /></main>
+    <footer>© {new Date().getFullYear()} Weipeng Zhang <a href="https://github.com/Wp-Zhang">GitHub ↗</a></footer>
+  </body>
+</html>

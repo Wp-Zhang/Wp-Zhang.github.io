@@ -1,0 +1,26 @@
+{
+  "name": "ypaang-blog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check",
+    "prebuild": "node scripts/clean.mjs",
+    "build": "astro build && node scripts/check-output.mjs",
+    "preview": "astro preview",
+    "test": "node --test scripts/publication.test.mjs",
+    "test:publication": "node scripts/publication-integration.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "astro": "^7.3.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.1"
+  }
+}
