@@ -47,6 +47,9 @@ const pageTitle = title ? `${title} · Weipeng Zhang` : 'Weipeng Zhang / Blog';
     <main id="main"><slot /></main>
     <footer class="site-footer"><span>© {new Date().getFullYear()} Weipeng Zhang</span><div class="footer-links"><a href={sitePath(locale, 'index.xml')}>RSS ↗</a><a href="https://github.com/Wp-Zhang">GitHub ↗</a></div></footer>
     <script>
+      import '../scripts/citation-preview';
+      import '../scripts/title-effects';
+      let themeTimer: ReturnType<typeof setTimeout>;
       const button = document.querySelector<HTMLButtonElement>('#theme-toggle')!;
       const system = matchMedia('(prefers-color-scheme: dark)');
       let explicit = false;
@@ -59,6 +62,9 @@ const pageTitle = title ? `${title} · Weipeng Zhang` : 'Weipeng Zhang / Blog';
       button.hidden = false;
       update();
       button.addEventListener('click', () => {
+        document.documentElement.classList.add('theme-transition');
+        clearTimeout(themeTimer);
+        themeTimer = setTimeout(() => document.documentElement.classList.remove('theme-transition'), 240);
         const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = theme;
         explicit = true;

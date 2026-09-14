@@ -49,3 +49,33 @@
 ## 技术长文密度
 
 内容定位为技术讨论与思考，密度介于论文与普通文章之间。字号小幅缩减，主要压缩行高、段落、标题、代码与公式的垂直空白。正文段落间距 1em，二级标题上间距 1.6em、下间距 0.6em，公式上下间距 0.8em。参考文献标题及回链的无障碍文案按文章文件的 .zh.md / .en.md 后缀生成，不同时展示双语。
+
+## 微交互
+
+作者名保持静态；文章目录标题增加细线展开与 3px 箭头位移。引用角标支持悬浮和键盘聚焦预览，Esc 关闭，点击保留原有页内跳转。主题切换采用 200ms 过渡。减少动态效果偏好下停用位移动画，触屏不启用 hover 预览。不提供代码复制。
+
+审核样张仅存在于本地，路径通过 `.git/info/exclude` 排除，生产构建仍禁止 design 路径。
+
+
+## 动效选型研究（2026-09-14）
+
+用户反馈：作者名称旁的点阵过于刻意，已删除。显著动效应围绕中频内容交互，优先文章目录可点击标题，其次文章页标题。现有引用预览保留。
+
+GitHub API 实查（star 随时间变化）：
+- DavidHDev/react-bits：47,226 stars，最近 push 2026-09-11。现成效果丰富；检查了 VariableProximity 与 TrueFocus 的 TS 源码。
+- motiondivision/motion：33,599 stars，最近 push 2026-09-14。MIT，适合 Astro 使用原生 JavaScript API，属于动画引擎。
+- juliangarnier/anime：72,814 stars，最近 push 2026-08-21。MIT，适合时间线、SVG 和复杂文字动画，属于动画引擎。
+- codrops/LineTextHoverAnimations：154 stars，最近 push 2024-06-19。MIT，有现成终端式文字 hover；活跃度和受关注程度不及前三个。
+
+候选效果：True Focus 的手动框角聚焦可用于文章目录标题（关闭文字模糊、自动轮播和光晕）；Variable Proximity 的距离驱动字重可用于文章页主标题。后者依赖可变字体，因此中文主标题改用自托管 Noto Sans SC Variable。已完成接入，具体适配见下节。
+
+
+## React Bits 适配
+
+已基于 React Bits TrueFocus / VariableProximity 源码接入 Astro DOM 版本，不引入 React 运行时。来源：
+- https://github.com/DavidHDev/react-bits/blob/main/src/ts-default/TextAnimations/TrueFocus/TrueFocus.tsx
+- https://github.com/DavidHDev/react-bits/blob/main/src/ts-default/TextAnimations/VariableProximity/VariableProximity.tsx
+
+目录标题：手动聚焦框角，在标题间移动；不模糊、不发光、不自动轮播。文章页主标题：130px 半径内字重从 650 渐变至最多 850，离开后恢复；固定单字宽度避免布局跳动。中文主标题使用按字符范围加载的 Noto Sans SC Variable，英文沿用 Source Serif 4。字体与许可随站点托管。
+
+触屏与减少动态效果时保留静态标题。仅在鼠标移动时安排绘制，未运行常驻动画循环。源码许可见 public/licenses/react-bits.txt，字体许可见 public/licenses/noto-sans-sc.txt。
