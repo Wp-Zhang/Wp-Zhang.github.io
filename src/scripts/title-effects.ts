@@ -54,6 +54,7 @@ function setupFocus(list: HTMLElement) {
 
 function setupProximity(title: HTMLElement) {
   if (title.children.length) return; // Preserve author-provided rich headings.
+  const warp = title.hasAttribute('data-warp-text');
   const label = title.textContent ?? '';
   const oldLabel = title.getAttribute('aria-label');
   title.setAttribute('aria-label', label);
@@ -76,7 +77,7 @@ function setupProximity(title: HTMLElement) {
   });
   title.replaceChildren(fragment);
   const measure = () => {
-    characters.forEach(letter => { letter.style.width = ''; letter.style.fontWeight = '650'; });
+    characters.forEach(letter => { letter.style.width = ''; letter.style.fontWeight = '650'; letter.style.fontVariationSettings = ''; letter.style.setProperty('--warp-shift', '0px'); });
     const widths = characters.map(letter => letter.getBoundingClientRect().width);
     characters.forEach((letter, i) => letter.style.width = `${widths[i]}px`);
   };
@@ -91,6 +92,10 @@ function setupProximity(title: HTMLElement) {
       const distance = Math.hypot(point.x - rect.left - rect.width / 2, point.y - rect.top - rect.height / 2);
       const falloff = Math.max(0, 1 - distance / 130) ** 2;
       letter.style.fontWeight = String(Math.round(650 + 200 * falloff));
+      letter.style.setProperty('--warp-shift', `${(2.8 * falloff).toFixed(2)}px`);
+      // Source Serif's optical axis adds the local glyph deformation of TextPressure,
+      // while keeping the selected editorial font and fixed line layout.
+      if (warp && !isChinese) letter.style.fontVariationSettings = `'opsz' ${24 - 14 * falloff}`;
     });
   };
   const move = (event: PointerEvent) => {
@@ -99,7 +104,7 @@ function setupProximity(title: HTMLElement) {
   };
   const reset = () => {
     cancelAnimationFrame(pending); pending = 0;
-    characters.forEach(letter => letter.style.fontWeight = '650');
+    characters.forEach(letter => { letter.style.fontWeight = '650'; letter.style.fontVariationSettings = ''; letter.style.setProperty('--warp-shift', '0px'); });
   };
   title.addEventListener('pointermove', move);
   title.addEventListener('pointerleave', reset);
@@ -119,7 +124,7 @@ async function update() {
   await document.fonts.ready;
   if (!enabled.matches || current !== generation) return;
   document.querySelectorAll<HTMLElement>('.post-list').forEach(setupFocus);
-  document.querySelectorAll<HTMLElement>('.article-header h1').forEach(setupProximity);
+  document.querySelectorAll<HTMLElement>('.article-header h1, [data-warp-text]').forEach(setupProximity);
 }
 enabled.addEventListener('change', update);
 void update();
