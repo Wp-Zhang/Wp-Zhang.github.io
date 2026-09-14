@@ -1,4 +1,4 @@
-import { writeFile, rm, readFile, readdir } from "node:fs/promises";
+import { writeFile, appendFile, rm, readFile, readdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 
@@ -38,7 +38,43 @@ try {
       `---\ntitle: PublicationFixture-${name}\ndate: 2020-01-01\nstatus: ${status}\n---\n\nPublicationBody-${name}\n`,
     );
   }
+  const taggedFile = `${directory}/public.zh.md`;
+  const taggedSource = await readFile(taggedFile, 'utf8');
+  await writeFile(taggedFile, taggedSource.replace('date:', 'tags: ["机器学习", "C++", "a/b", "a-b"]\ndate:'));
+  // Minimal generated fixtures exercise the real Markdown pipeline without shipping demo pages.
+  const richText = '\nInline $x^2$.\n\n$$\nx^2 + y^2 = z^2\n$$\n\n```python\ndef square(x):\n    return x * x\n```\n\nA citation.[^source] Repeated.[^source]\n\n[^source]: A reference with [a link](https://example.com).\n';
+  await appendFile(taggedFile, richText);
+  await appendFile(`${directory}/paired.en.md`, richText);
+  const privateFile = `${directory}/private.zh.md`;
+  await writeFile(privateFile, (await readFile(privateFile, 'utf8')).replace('date:', 'tags: ["PrivateOnlyTag"]\ndate:'));
   build();
+  const article = await readFile('dist/posts/publication-test-fixtures/public/index.html', 'utf8');
+  assert.ok(article.includes('>参考文献</h2>'));
+  assert.ok(!article.includes('参考文献 / References'));
+  const englishArticle = await readFile('dist/en/posts/publication-test-fixtures/paired/index.html', 'utf8');
+  assert.ok(englishArticle.includes('>References</h2>'));
+  assert.ok(!englishArticle.includes('参考文献'));
+  assert.ok(englishArticle.includes('Back to citation'));
+  assert.ok(article.includes('class="katex"'), 'Math must render at build time');
+  assert.ok(article.includes('katex-mathml'), 'MathML must be available to assistive technology');
+  assert.ok(article.includes('--shiki-dark'), 'Both code themes must be emitted');
+  assert.ok(article.includes('data-footnote-ref'), 'Citations must render as linked superscripts');
+  assert.ok(article.includes('data-footnote-backref'), 'References must link back to citations');
+  for (const match of article.matchAll(/href="#([^" ]+)"/g)) {
+    assert.ok(article.includes(`id="${match[1]}"`), `Missing fragment target: ${match[1]}`);
+  }
+  const slug = tag => Array.from(tag).map(char => char.codePointAt(0).toString(16)).join('-');
+  for (const tag of ['机器学习', 'C++', 'a/b', 'a-b']) {
+    for (const prefix of ['', 'en/']) {
+      const page = await readFile(`dist/${prefix}tags/${slug(tag)}/index.html`, 'utf8');
+      assert.ok(page.includes('PublicationFixture-public'), 'Tag page must include matching public article');
+      assert.ok(!page.includes('PublicationFixture-paired'), 'Tag page must exclude other articles');
+      assert.ok(!page.includes('PublicationFixture-private'), 'Tag page must exclude private articles');
+    }
+    assert.ok(article.includes(`/tags/${slug(tag)}/`), 'Article tag must link to filter');
+  }
+  await assert.rejects(readFile(`dist/tags/${slug('PrivateOnlyTag')}/index.html`), { code: 'ENOENT' });
+  console.log('Math, dual code themes, citation backlinks, and public-only tag filtering passed.');
   const output = await contents("dist");
   for (const status of statuses) {
     assert.equal(

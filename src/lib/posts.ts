@@ -37,3 +37,8 @@ export const formatDate = (date: Date, locale: Locale) =>
     day: "numeric",
     timeZone: "Asia/Shanghai",
   });
+
+// Encode code points to keep arbitrary tags (C++, 中文, a/b) collision-free and route-safe.
+export const tagSlug = (tag: string) => Array.from(tag).map(char => char.codePointAt(0)!.toString(16)).join('-');
+export const tagUrl = (tag: string, locale: Locale) => sitePath(locale, `tags/${tagSlug(tag)}/`);
+export const publicTags = (posts: Post[]) => [...new Set(posts.flatMap(post => post.data.tags).filter(Boolean))].sort((a, b) => a.localeCompare(b));

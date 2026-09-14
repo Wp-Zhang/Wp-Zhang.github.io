@@ -67,6 +67,7 @@ for (const title of unpublished) {
   );
 }
 for (const file of outputFiles) {
+  assert.ok(!file.startsWith("dist/design/"), `Local design preview leaked: ${file}`);
   assert.ok(
     !/^dist\/(archive|docs|content|static)\//.test(file),
     `Archive path leaked: ${file}`,
