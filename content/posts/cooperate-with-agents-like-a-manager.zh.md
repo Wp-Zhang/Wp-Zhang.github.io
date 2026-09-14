@@ -1,7 +1,6 @@
 ---
 slug: cooperate-with-agents-like-a-manager
-title: 如何与Agent沟通
-description: 我们应该如何向Agent高效传达我们的想法？
+title: 与Agent合作——从另一个视角看待Agent
 date: 2026-09-14
 status: draft
 ---
