@@ -1,6 +1,6 @@
 ---
 slug: cooperate-with-agents-like-a-manager
-title: 与Agent合作——从另一个视角看待Agent
+title: 学会派活——2026如何与Agent协作
 date: 2026-09-14
 status: draft
 ---
